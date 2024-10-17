@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lms_project/pages/login.dart';
-import 'package:lms_project/pages/navs.dart';
 
 void main() {
   runApp(const MyApp());

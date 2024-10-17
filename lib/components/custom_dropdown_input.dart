@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
 
-class CustomTextInput extends StatefulWidget {
+class CustomDropdownInput extends StatefulWidget {
   final String label;
   final TextEditingController controller;
-  final bool obscureText;
   final IconData? icon;
+  final Map<String, String> options;
 
-  const CustomTextInput({
+  const CustomDropdownInput({
     super.key,
     required this.label,
     required this.controller,
-    this.obscureText = false,
     this.icon,
+    required this.options,
   });
 
   @override
-  // ignore: library_private_types_in_public_api
-  _CustomTextInputState createState() => _CustomTextInputState();
+  _CustomDropdownInputState createState() => _CustomDropdownInputState();
 }
 
-class _CustomTextInputState extends State<CustomTextInput> {
+class _CustomDropdownInputState extends State<CustomDropdownInput> {
   bool _isFocused = false;
 
   @override
@@ -44,10 +43,19 @@ class _CustomTextInputState extends State<CustomTextInput> {
             ],
             borderRadius: BorderRadius.circular(30),
           ),
-          child: TextFormField(
-            controller: widget.controller,
-            obscureText: widget.obscureText,
-            style: const TextStyle(color: Color(0xFF000000)),
+          child: DropdownButtonFormField<String>(
+            value: widget.controller.text.isNotEmpty ? widget.controller.text : null,
+            items: widget.options.entries
+                .map((entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value), // Display text
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                widget.controller.text = value!; // Stores the value
+              });
+            },
             decoration: InputDecoration(
               labelText: widget.label,
               labelStyle: const TextStyle(color: Color(0xFF000000)),
@@ -62,7 +70,8 @@ class _CustomTextInputState extends State<CustomTextInput> {
               contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
               prefixIcon: widget.icon != null ? Icon(widget.icon, color: Color(0xFF000000)) : null,
             ),
-            keyboardType: TextInputType.emailAddress,
+            iconEnabledColor: Color(0xFF000000),
+            dropdownColor: Color(0xFFFFFFFF),
           ),
         ),
       ),

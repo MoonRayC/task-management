@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:lms_project/components/customButton.dart';
-import 'package:lms_project/components/customTextInput.dart';
+import 'package:lms_project/components/custom_button.dart';
+import 'package:lms_project/components/custom_text_input.dart';
 import 'package:lms_project/pages/navs.dart';
 
 class InfoFormPage extends StatefulWidget {

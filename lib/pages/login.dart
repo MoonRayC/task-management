@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lms_project/components/customButton.dart';
-import 'package:lms_project/components/customTextInput.dart';
-import 'package:lms_project/pages/infoForm.dart';
+import 'package:lms_project/components/custom_button.dart';
+import 'package:lms_project/components/custom_text_input.dart';
+import 'package:lms_project/pages/info_form.dart';
+import 'package:lms_project/pages/navs.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool isLoginActive = true;
 
+  @override
   void dispose() {
     _usernameController.dispose();
     _emailController.dispose();
@@ -157,12 +159,11 @@ class _LoginPageState extends State<LoginPage> {
                           ? "login button is pressed"
                           : "signup button is pressed");
                       if (isLoginActive) {
-                        print("Username: ${_usernameController.text}");
-                        print("Password: ${_passwordController.text}");
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Navs()));
                       } else {
-                        print("Username: ${_usernameController.text}");
-                        print("Email: ${_emailController.text}");
-                        print("Password: ${_passwordController.text}");
                         Navigator.push(
                             context,
                             MaterialPageRoute(

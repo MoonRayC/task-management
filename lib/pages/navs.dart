@@ -2,27 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:lms_project/pages/addProject.dart';
+import 'package:lms_project/actionPage/add_project.dart';
+import 'package:lms_project/actionPage/add_task.dart';
 import 'task.dart';
 import 'dashboard.dart';
 import 'analytics.dart';
 import 'settings.dart';
 
 class Navs extends StatefulWidget {
-  const Navs({super.key});
+  final int initialIndex;
+
+  const Navs({super.key, this.initialIndex = 0});
 
   @override
   _NavsState createState() => _NavsState();
 }
 
 class _NavsState extends State<Navs> {
-  int currentIndex = 0;
+  late int currentIndex;
   final List<Widget> _pages = [
     const Dashboard(),
-    Task(),
+    Tasks(),
     const Analytics(),
     const Settings(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.initialIndex; // Set initial index based on Navs input
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -90,9 +99,11 @@ class _NavsState extends State<Navs> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.dashboard, 'Dashboard', 0),
+              const SizedBox(width: 15),
               _buildNavItem(Icons.receipt_long, 'Task', 1),
               const SizedBox(width: 50),
               _buildNavItem(Icons.waterfall_chart, 'Analytics', 2),
+              const SizedBox(width: 15),
               _buildNavItem(Icons.settings, 'Settings', 3),
             ],
           ),
@@ -132,7 +143,7 @@ class _NavsState extends State<Navs> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => AddProduct()),
+                                  builder: (context) => AddProject()),
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -150,6 +161,11 @@ class _NavsState extends State<Navs> {
                         const SizedBox(height: 10),
                         ElevatedButton(
                           onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => AddTask()),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.lightBlueAccent,

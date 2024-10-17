@@ -1,91 +1,54 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lms_project/components/customButton.dart';
+import 'package:lms_project/actionPage/edit_task.dart';
 
-// Product Model
-class Product {
-  final String code;
-  final String name;
-  final int quantity;
-  final double price;
-  final String description;
+import 'package:lms_project/components/custom_button.dart';
+import 'package:lms_project/components/custom_header.dart';
+import 'package:lms_project/components/time_history.dart';
+import 'package:lms_project/controller/task_controller.dart';
+import 'package:lms_project/model/task_model.dart' as model;
 
-  Product({
-    required this.code,
-    required this.name,
-    required this.quantity,
-    required this.price,
-    required this.description,
-  });
+class Tasks extends StatefulWidget {
+  const Tasks({super.key});
 
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      code: json['code'],
-      name: json['name'],
-      quantity: json['quantity'],
-      price: json['price'].toDouble(),
-      description: json['description'] ?? 'No description provided',
-    );
-  }
-}
-
-class ProductService {
-  final String baseUrl = 'http://119.10.255.198:8000/api/products/';
-
-  Future<List<Product>> fetchProducts() async {
-    final response = await http.get(Uri.parse(baseUrl));
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      var jsonResponse = json.decode(response.body);
-      List<dynamic> productList = jsonResponse['products']['data'];
-      return productList.map((json) => Product.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load products');
-    }
-  }
-}
-
-
-
-// Task Widget to display the product list
-class Task extends StatefulWidget {
   @override
-  _TaskState createState() => _TaskState();
+  _TasksState createState() => _TasksState();
 }
 
-class _TaskState extends State<Task> {
-  late Future<List<Product>> futureProducts;
+class _TasksState extends State<Tasks> {
+  final TaskController _taskController = TaskController();
+  late Future<List<model.Task>> _tasks;
 
   @override
   void initState() {
     super.initState();
-    // Fetch the products when the widget initializes
-    futureProducts = ProductService().fetchProducts();
+    _loadTasks();
+  }
+
+  void _loadTasks() {
+    _tasks = _taskController.getTasks();
+  }
+
+  Future<void> _deleteTask(int id) async {
+    await _taskController.deleteTask(id);
+    _loadTasks();
+  }
+
+  void _refreshTasks() {
+    setState(() {
+      _tasks = _taskController.getTasks();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    int number = 0;
     return Scaffold(
       body: Container(
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(10, 0, 10, 5),
         child: Column(
           children: [
             Row(
               children: [
-                Text(
-                  'Product List',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: GoogleFonts.cabin().fontFamily,
-                  ),
-                ),
-                SizedBox(width: 10),
-                SvgPicture.asset('assets/images/vector1.svg'),
+                CustomHeader(title: "Tasks List")
               ],
             ),
             SizedBox(height: 20),
@@ -99,14 +62,14 @@ class _TaskState extends State<Task> {
                   CustomButton(
                       width: 120,
                       height: 30,
-                      text: 'Quantity',
+                      text: 'Priority',
                       onPressed: () {}),
                   SizedBox(width: 8),
                   CustomButton(
-                      width: 80, height: 30, text: 'Price', onPressed: () {}),
+                      width: 80, height: 30, text: 'Status', onPressed: () {}),
                   SizedBox(width: 8),
                   CustomButton(
-                      width: 120, height: 30, text: 'Low Stocks', onPressed: () {}),
+                      width: 120, height: 30, text: 'Points', onPressed: () {}),
                 ],
               ),
             ),
@@ -117,91 +80,130 @@ class _TaskState extends State<Task> {
             ),
             SizedBox(height: 20),
             Expanded(
-              child: FutureBuilder<List<Product>>(
-                future: futureProducts,
+              child: FutureBuilder<List<model.Task>>(
+                future: _tasks,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
+                    return Center(child: Text('Error loading tasks'));
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No products available'));
-                  }
-
-                  List<Product> products = snapshot.data!;
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: Column(
-                      children: products.map((product) {
-                        return Column(
-                          children: [
-                            Container(
-                              color: Colors.grey[300],
-                              padding: EdgeInsets.all(16.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          product.name,
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          product.description,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        SizedBox(height: 8),
-                                        Row(
+                    return Center(child: Text('No tasks available'));
+                  } else {
+                    final tasks = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: tasks.length,
+                      itemBuilder: (context, index) {
+                        final task = tasks[index];
+                        return Dismissible(
+                          key: Key(task.id.toString()),
+                          direction: DismissDirection.endToStart,
+                          onDismissed: (direction) {
+                            _deleteTask(task.id!);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${task.title} deleted')),
+                            );
+                          },
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: EdgeInsets.all(20),
+                            child: Icon(Icons.delete, color: Colors.white),
+                          ),
+                          child: GestureDetector(
+                            onLongPress: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => EditTaskDialog(
+                                  task: task,
+                                  taskController: _taskController,
+                                  refreshTasks: _refreshTasks,
+                                ),
+                              ); // Show edit dialog on long press
+                            },
+                            child: Column(
+                              children: [
+                                Container(
+                                  color: Colors.grey[300],
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Icon(
-                                              Icons.access_time,
-                                              size: 16,
-                                              color: Colors.black54,
-                                            ),
-                                            SizedBox(width: 4),
                                             Text(
-                                              '7 weeks ago',
+                                              task.title,
                                               style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.red,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
                                               ),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Text(
+                                              task.description,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.access_time,
+                                                  size: 16,
+                                                  color: TimeHistory(
+                                                    createdAt: task.createdAt,
+                                                    endDate: task.endDate!,
+                                                    status: task.status,
+                                                  ).getTextColor(),
+                                                ),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  TimeHistory(
+                                                    createdAt: task.createdAt,
+                                                    endDate: task.endDate!,
+                                                    status: task.status,
+                                                  ).getTimeAgo(),
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: TimeHistory(
+                                                      createdAt: task.createdAt,
+                                                      endDate: task.endDate!,
+                                                      status: task.status,
+                                                    ).getTextColor(),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: Colors.blueAccent,
-                                    child: Text(
-                                      product.code,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
                                       ),
-                                    ),
+                                      CircleAvatar(
+                                        radius: 16,
+                                        backgroundColor: Colors.blueAccent,
+                                        child: Text(
+                                          task.points.toString(),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                ),
+                                SizedBox(height: 10),
+                              ],
                             ),
-                            SizedBox(height: 10),
-                          ],
+                          ),
                         );
-                      }).toList(),
-                    ),
-                  );
+                      },
+                    );
+                  }
                 },
               ),
             ),
